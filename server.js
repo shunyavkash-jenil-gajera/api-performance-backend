@@ -42,6 +42,17 @@ app.post("/test", async (req, res) => {
     });
   }
 
+  const normalizedUrl = String(url).trim();
+  if (!/^https?:\/\//i.test(normalizedUrl)) {
+    return res.status(400).json({
+      status: null,
+      responseTimeMs: 0,
+      responseHeaders: null,
+      error: "URL must start with http:// or https://",
+      data: null,
+    });
+  }
+
   const normalizedMethod = String(method).toUpperCase();
   if (!SUPPORTED_METHODS.includes(normalizedMethod)) {
     return res.status(400).json({
@@ -90,7 +101,7 @@ app.post("/test", async (req, res) => {
   try {
     // Build Axios config dynamically based on method, params, headers, body, and auth.
     const axiosConfig = {
-      url,
+      url: normalizedUrl,
       method: normalizedMethod,
       params: normalizedParams,
       headers: normalizedHeaders,
@@ -127,14 +138,32 @@ app.post("/test", async (req, res) => {
   } catch (error) {
     const endTime = process.hrtime.bigint();
     const responseTimeMs = Number(endTime - startTime) / 1_000_000;
-    const upstreamStatus = error.response?.status || 500;
+    const upstreamStatus = error.response?.status || 502;
+    const errorCode = error?.code || null;
+    const fallbackMessage = errorCode
+      ? `Request failed (${errorCode}).`
+      : "Request failed.";
+    const errorMessage =
+      typeof error?.message === "string" && error.message.trim()
+        ? error.message
+        : fallbackMessage;
 
     // Return actual upstream error status when available.
     return res.status(upstreamStatus).json({
       status: error.response?.status || null,
       responseTimeMs: Number(responseTimeMs.toFixed(2)),
       responseHeaders: error.response?.headers || null,
-      error: error.message || "Request failed.",
+      error: errorMessage,
+      debug:
+        error.response || !error
+          ? null
+          : {
+              code: errorCode,
+              syscall: error?.syscall || null,
+              errno: error?.errno || null,
+              address: error?.address || null,
+              port: error?.port || null,
+            },
       data: error.response?.data || null,
     });
   }
