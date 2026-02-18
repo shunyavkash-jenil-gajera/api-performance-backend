@@ -5,6 +5,8 @@ import axios from "axios";
 const app = express();
 const PORT = process.env.PORT || 5000;
 const SUPPORTED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const LATENCY_NOTE =
+  "Latency is measured on backend server (server-to-server), not from local machine.";
 
 app.use(
   cors({
@@ -18,7 +20,7 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
+app.get("/health", (_, res) => {
   res.json({ ok: true });
 });
 
@@ -131,6 +133,7 @@ app.post("/test", async (req, res) => {
     return res.json({
       status: response.status,
       responseTimeMs: Number(responseTimeMs.toFixed(2)),
+      latencyContext: LATENCY_NOTE,
       responseHeaders: response.headers,
       error: null,
       data: response.data,
@@ -152,6 +155,7 @@ app.post("/test", async (req, res) => {
     return res.status(upstreamStatus).json({
       status: error.response?.status || null,
       responseTimeMs: Number(responseTimeMs.toFixed(2)),
+      latencyContext: LATENCY_NOTE,
       responseHeaders: error.response?.headers || null,
       error: errorMessage,
       debug:
