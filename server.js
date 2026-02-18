@@ -4,7 +4,15 @@ import axios from "axios";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SUPPORTED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const SUPPORTED_METHODS = [
+  "GET",
+  "HEAD",
+  "OPTIONS",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+];
 const LATENCY_NOTE =
   "Latency is measured on backend server (server-to-server), not from local machine.";
 
@@ -14,7 +22,7 @@ app.use(
       "http://localhost:5173",
       "https://api-performance-frontend.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
